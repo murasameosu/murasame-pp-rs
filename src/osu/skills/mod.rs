@@ -31,7 +31,7 @@ impl Skills {
         Self {
             aim: Aim::new(true),
             aim_no_sliders: Aim::new(false),
-            speed: Speed::new(hit_window, mods),
+            speed: Speed::new(hit_window),
             flashlight: Flashlight::new(mods, radius, time_preempt, time_fade_in),
         }
     }
