@@ -1,3 +1,3 @@
-# akatsuki-pp-rs
+# murasame-pp-rs
 
-`akatsuki-pp-rs` is a fork of [rosu-pp](https://github.com/MaxOhn/rosu-pp) with customized calculations for relax and autopilot.
+`murasame-pp-rs` is a fork of [rosu-pp](https://github.com/MaxOhn/rosu-pp) with customized calculations for relax and autopilot.

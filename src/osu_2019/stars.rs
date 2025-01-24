@@ -2,11 +2,9 @@
 //! This means the jump distance inbetween notes might be slightly off, resulting in small inaccuracies.
 //! Since calculating these offsets is relatively expensive though, this version is faster than `all_included`.
 
-use super::{DifficultyObject, OsuObject, Skill, SkillKind};
+use super::{curve::CurveBuffers, DifficultyObject, OsuObject, Skill, SkillKind};
 
-use crate::{Beatmap, GameMods};
-
-use rosu_map::section::hit_objects::CurveBuffers;
+use crate::Beatmap;
 
 const OBJECT_RADIUS: f32 = 64.0;
 const SECTION_LEN: f32 = 400.0;
@@ -22,23 +20,17 @@ const NORMALIZED_RADIUS: f32 = 52.0;
 /// processing stack leniency is relatively expensive.
 ///
 /// In case of a partial play, e.g. a fail, one can specify the amount of passed objects.
-pub fn stars(
-    map: &Beatmap,
-    mods: GameMods,
-    passed_objects: Option<u32>,
-) -> OsuDifficultyAttributes {
+pub fn stars(map: &Beatmap, mods: u32, passed_objects: Option<usize>) -> OsuDifficultyAttributes {
+    let take = passed_objects.unwrap_or(map.hit_objects.len());
+
     let map_attributes = map.attributes().mods(mods).build();
 
     let mut diff_attributes = OsuDifficultyAttributes {
         ar: map_attributes.ar,
         od: map_attributes.od,
         cs: map_attributes.cs,
-        beatmap_id: map.beatmap_id,
-        beatmap_creator: map.creator.clone(),
         ..Default::default()
     };
-
-    let take = passed_objects.unwrap_or(map.hit_objects.len() as u32) as usize;
 
     if take < 2 {
         return diff_attributes;
@@ -48,8 +40,8 @@ pub fn stars(
     let radius = OBJECT_RADIUS * (1.0 - 0.7 * (map_attributes.cs as f32 - 5.0) / 5.0) / 2.0;
     let mut scaling_factor = NORMALIZED_RADIUS / radius;
 
-    if radius < 30.0 {
-        let small_circle_bonus = (30.0 - radius).min(5.0) / 50.0;
+    if radius < 30.05 {
+        let small_circle_bonus = ((30.05 - radius) / 50.0).powf(1.1) * 1.45;
         scaling_factor *= 1.0 + small_circle_bonus;
     }
 
@@ -57,7 +49,7 @@ pub fn stars(
     let mut curve_bufs = CurveBuffers::default();
 
     let mut hit_objects = map.hit_objects.iter().take(take).filter_map(|h| {
-        Some(OsuObject::new(
+        OsuObject::new(
             h,
             map,
             radius,
@@ -65,7 +57,7 @@ pub fn stars(
             &mut ticks_buf,
             &mut diff_attributes,
             &mut curve_bufs,
-        ))
+        )
     });
 
     let mut aim = Skill::new(SkillKind::Aim);
@@ -145,6 +137,7 @@ pub fn stars(
     diff_attributes.aim_strain = aim_strain as f64;
     diff_attributes.aim_difficult_strain_count = aim_difficult_strain_count;
     diff_attributes.speed_difficult_strain_count = speed_difficult_strain_count;
+    diff_attributes.n_sliders = map.n_sliders as usize;
 
     diff_attributes
 }
@@ -164,8 +157,6 @@ pub struct OsuDifficultyAttributes {
     pub max_combo: usize,
     pub aim_difficult_strain_count: f64,
     pub speed_difficult_strain_count: f64,
-    pub beatmap_id: i32,
-    pub beatmap_creator: String,
 }
 
 #[derive(Clone, Debug)]
@@ -174,6 +165,7 @@ pub struct OsuPerformanceAttributes {
     pub pp: f64,
     pub pp_acc: f64,
     pub pp_aim: f64,
+    pub pp_flashlight: f64,
     pub pp_speed: f64,
     pub effective_miss_count: f64,
 }

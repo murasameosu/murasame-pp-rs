@@ -1,3 +1,6 @@
+mod curve;
+use curve::Curve;
+
 mod difficulty_object;
 use difficulty_object::DifficultyObject;
 
