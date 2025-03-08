@@ -434,10 +434,6 @@ impl OsuPpInner {
     }
 
     fn compute_aim_value(&self) -> f64 {
-        if self.mods.ap() {
-            return 0.0;
-        }
-        
         let mut aim_value = (5.0 * (self.attrs.aim / 0.0675).max(1.0) - 4.0).powi(3) / 100_000.0;
 
         let total_hits = self.total_hits();
@@ -512,9 +508,7 @@ impl OsuPpInner {
             );
         }
 
-        let ar_factor = if self.mods.ap() {
-            0.0
-        } else if self.attrs.ar > 10.33 {
+        let ar_factor = if self.attrs.ar > 10.33 {
             0.3 * (self.attrs.ar - 10.33)
         } else {
             0.0
